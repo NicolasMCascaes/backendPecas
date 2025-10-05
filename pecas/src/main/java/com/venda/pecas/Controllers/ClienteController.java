@@ -9,9 +9,14 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.venda.pecas.Dtos.ClienteDto;
 import com.venda.pecas.Dtos.ClienteLoginDto;
+import com.venda.pecas.Dtos.ClienteResponseDto;
 import com.venda.pecas.Models.Clientes;
 import com.venda.pecas.Repositories.ClientesRepository;
+
+import jakarta.validation.Valid;
+
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -31,12 +36,23 @@ public class ClienteController {
     }
 
     @PostMapping("/cadastrarCliente")
-    public Clientes cadastraCliente(@RequestBody Clientes clientes) {
-        return clientesRepository.save(clientes);
+    public ResponseEntity<?> cadastraCliente(@RequestBody ClienteDto cliente) {
+        Clientes novoCliente = new Clientes();
+        novoCliente.setNomeCompleto(cliente.nomeCompleto());
+        novoCliente.setCpf(cliente.cpf());
+        novoCliente.setDataDeNascimento(cliente.dataDenascimento());
+        novoCliente.setEmail(cliente.email());
+        novoCliente.setSenha(passwordEncoder.encode(cliente.senha()));
+        novoCliente.setAtivo(true);
+        clientesRepository.save(novoCliente);
+        ClienteResponseDto resposta = new ClienteResponseDto(
+                novoCliente.getNomeCompleto(),
+                novoCliente.getEmail());
+        return ResponseEntity.status(HttpStatus.CREATED).body(resposta);
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> loginCliente(@RequestBody ClienteLoginDto clienteLogin) {
+    public ResponseEntity<?> loginCliente(@RequestBody @Valid ClienteLoginDto clienteLogin) {
         Optional<Clientes> cliente = clientesRepository.findByEmail(clienteLogin.email());
         if (cliente.isPresent() && passwordEncoder.matches(clienteLogin.senha(), cliente.get().getSenha())) {
             return ResponseEntity.ok("Logado com sucesso!");

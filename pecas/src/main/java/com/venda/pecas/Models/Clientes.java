@@ -26,18 +26,20 @@ public class Clientes {
     private String email;
     @Column(nullable = false)
     private String senha;
+    private boolean ativo;
     @OneToMany(mappedBy = "cliente")
     @JsonIgnore
     private List<Pedidos> pedido;
 
     public Clientes(long idCliente, String nomeCompleto, String cpf, LocalDate dataDeNascimento, String email,
-            String senha) {
+            String senha, boolean ativo) {
         this.idCliente = idCliente;
         this.nomeCompleto = nomeCompleto;
         this.cpf = cpf;
         this.dataDeNascimento = dataDeNascimento;
         this.email = email;
         this.senha = senha;
+        this.ativo = ativo;
     }
 
     public Clientes() {
@@ -90,4 +92,21 @@ public class Clientes {
     public void setSenha(String senha) {
         this.senha = senha;
     }
+
+    public void setAtivo(boolean ativo) {
+        this.ativo = ativo;
+    }
+
+    public boolean isAtivo() {
+        return ativo;
+    }
+
+    public List<Pedidos> getPedido() {
+        return pedido;
+    }
+
+    public void setPedido(List<Pedidos> pedido) {
+        this.pedido = pedido;
+    }
+
 }
