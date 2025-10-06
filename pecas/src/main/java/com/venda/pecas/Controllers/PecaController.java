@@ -36,6 +36,7 @@ public class PecaController {
         novaPeca.setCategoria(peca.categoria());
         novaPeca.setPrecoPeca(peca.precoPeca());
         novaPeca.setDisponivel(peca.disponivel());
+        novaPeca.setQtdEstoque(peca.qtdEstoque());
         pecasRepository.save(novaPeca);
         PecaResponseDto resposta = new PecaResponseDto(novaPeca.getNomePeca(), novaPeca.getDescricao(),
                 novaPeca.getCategoria(), novaPeca.getPrecoPeca(), novaPeca.getQtdEstoque());

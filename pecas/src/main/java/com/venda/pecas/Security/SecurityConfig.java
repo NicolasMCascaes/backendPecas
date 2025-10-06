@@ -19,7 +19,18 @@ public class SecurityConfig {
         http.csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(
-                        auth -> auth.requestMatchers("/pedidos/**", "/pecas/**", "/clientes/**").permitAll()
+                        auth -> auth.requestMatchers(
+                                "/pedidos/**",
+                                "/pecas/**",
+                                "/clientes/**",
+                                "/v3/api-docs",
+                                "/v3/api-docs/**",
+                                "/v3/api-docs/swagger-config",
+                                "/swagger-ui.html",
+                                "/swagger-ui/**",
+                                "/swagger-resources",
+                                "/swagger-resources/**",
+                                "/webjars/**").permitAll()
                                 .anyRequest().authenticated());
         return http.build();
 

@@ -25,6 +25,10 @@ public class Pedidos {
         this.cliente = cliente;
     }
 
+    public Pedidos() {
+
+    }
+
     public long getIdPedido() {
         return idPedido;
     }
