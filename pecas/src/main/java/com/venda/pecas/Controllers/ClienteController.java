@@ -2,6 +2,8 @@ package com.venda.pecas.Controllers;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,6 +16,7 @@ import com.venda.pecas.Dtos.ClienteLoginDto;
 import com.venda.pecas.Dtos.ClienteResponseDto;
 import com.venda.pecas.Models.Clientes;
 import com.venda.pecas.Repositories.ClientesRepository;
+import com.venda.pecas.Security.JwtUtil;
 
 import jakarta.validation.Valid;
 
@@ -29,13 +32,15 @@ import org.springframework.web.bind.annotation.PutMapping;
 public class ClienteController {
     private final ClientesRepository clientesRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtUtil jwtUtil;
 
-    public ClienteController(ClientesRepository clientesRepository, PasswordEncoder passwordEncoder) {
+    public ClienteController(ClientesRepository clientesRepository, PasswordEncoder passwordEncoder, JwtUtil jwtUtil) {
         this.clientesRepository = clientesRepository;
         this.passwordEncoder = passwordEncoder;
+        this.jwtUtil = jwtUtil;
     }
 
-    @PostMapping("/cadastrarCliente")
+    @PostMapping("auth/cadastrarCliente")
     public ResponseEntity<?> cadastraCliente(@RequestBody ClienteDto cliente) {
         Clientes novoCliente = new Clientes();
         novoCliente.setNomeCompleto(cliente.nomeCompleto());
@@ -51,19 +56,23 @@ public class ClienteController {
         return ResponseEntity.status(HttpStatus.CREATED).body(resposta);
     }
 
-    @PostMapping("/login")
+    @PostMapping("auth/login")
     public ResponseEntity<?> loginCliente(@RequestBody @Valid ClienteLoginDto clienteLogin) {
         Optional<Clientes> cliente = clientesRepository.findByEmail(clienteLogin.email());
         if (cliente.isPresent() && passwordEncoder.matches(clienteLogin.senha(), cliente.get().getSenha())) {
-            return ResponseEntity.ok("Logado com sucesso!");
+            String token = jwtUtil.generateToken(cliente.get().getEmail());
+            Map<String, String> body = new HashMap<>();
+            body.put("token", token);
+            return ResponseEntity.ok(body);
         }
-        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body("Credenciais Inválidas!");
     }
 
     @GetMapping("/listarClientes")
-    public List<Clientes> clientes() {
-        return clientesRepository.findAll();
+    public ResponseEntity<List<Clientes>> clientes() {
+        List<Clientes> list = clientesRepository.findAll();
+        return ResponseEntity.ok(list);
     }
 
     @DeleteMapping("/deletaCliente/{id}")
