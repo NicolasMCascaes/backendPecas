@@ -3,13 +3,11 @@ package com.venda.pecas.Controllers;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.venda.pecas.Exceptions.ResourceNotFoundException;
 import com.venda.pecas.Dtos.PedidosDto;
-import com.venda.pecas.Models.Clientes;
-import com.venda.pecas.Models.Pecas;
 import com.venda.pecas.Models.Pedidos;
-import com.venda.pecas.Repositories.ClientesRepository;
-import com.venda.pecas.Repositories.PecasRepository;
-import com.venda.pecas.Repositories.PedidosRepository;
+import com.venda.pecas.Services.PedidosService;
+
 import java.util.List;
 
 import org.springframework.http.HttpStatus;
@@ -25,55 +23,42 @@ import org.springframework.web.bind.annotation.PutMapping;
 @RequestMapping("/pedidos")
 public class PedidosController {
 
-    private final PedidosRepository pedidosRepository;
-    private final ClientesRepository clientesRepository;
-    private final PecasRepository pecasRepository;
+    private final PedidosService pedidosService;
 
-    public PedidosController(PedidosRepository pedidosRepository, ClientesRepository clientesRepository,
-            PecasRepository pecasRepository) {
-        this.pedidosRepository = pedidosRepository;
-        this.clientesRepository = clientesRepository;
-        this.pecasRepository = pecasRepository;
-
+    public PedidosController(PedidosService pedidosService) {
+        this.pedidosService = pedidosService;
     }
 
     @PostMapping("/criaPedido")
     public ResponseEntity<?> criaPedido(@RequestBody PedidosDto pedido) {
-        Pecas pecas = pecasRepository.findById(pedido.peca_id())
-                .orElseThrow(() -> new RuntimeException("Peça não encontrada"));
-        Clientes cliente = clientesRepository.findById(pedido.cliente_id())
-                .orElseThrow(() -> new RuntimeException("Cliente não encontrado"));
-
-        Pedidos pedidoSalvo = new Pedidos();
-        pedidoSalvo.setPeca(pecas);
-        pedidoSalvo.setCliente(cliente);
-        pedidosRepository.save(pedidoSalvo);
-
+        Pedidos pedidoSalvo = pedidosService.criaPedido(pedido);
         return ResponseEntity.status(HttpStatus.CREATED).body(pedidoSalvo);
     }
 
     @GetMapping("/listaPedidos")
-    public List<Pedidos> listaPedidos() {
-        return pedidosRepository.findAll();
+    public ResponseEntity<List<Pedidos>> listaPedidos() {
+        List<Pedidos> list = pedidosService.listarPedidos();
+        return ResponseEntity.ok(list);
     }
 
-    @DeleteMapping("/deletaPedido")
+    @DeleteMapping("/deletaPedido/{id}")
     public ResponseEntity<?> deletaPedido(@PathVariable Long id) {
-        if (!pedidosRepository.existsById(id)) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Pedido não encontrado!");
+        try {
+            pedidosService.deletaPedido(id);
+            return ResponseEntity.ok("Pedido deletado!");
+        } catch (ResourceNotFoundException ex) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
         }
-        pedidosRepository.deleteById(id);
-        return ResponseEntity.ok("Pedido deletado!");
     }
 
     @PutMapping("atualizaPedido/{id}")
     public ResponseEntity<?> atualizaPedido(@PathVariable Long id, @RequestBody Pedidos pedido) {
-        if (!pedidosRepository.existsById(id)) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Pedido não encontrado!");
+        try {
+            Pedidos pedidoAtualizado = pedidosService.atualizaPedido(id, pedido);
+            return ResponseEntity.ok("Pedido atualizado!" + pedidoAtualizado);
+        } catch (ResourceNotFoundException ex) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
         }
-        pedido.setIdPedido(id);
-        Pedidos pedidoAtualizado = pedidosRepository.save(pedido);
-        return ResponseEntity.ok("Pedido atualizado!" + pedidoAtualizado);
     }
 
 }
